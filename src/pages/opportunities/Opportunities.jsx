@@ -9,168 +9,197 @@ const Opportunities = () => {
     const [loading, setLoading] = useState(true);
     const [selectedOpp, setSelectedOpp] = useState(null); // For AI Modal
 
+    // Filter & Sort State
+    const [filterStatus, setFilterStatus] = useState('all');
+    const [sortOption, setSortOption] = useState('date-desc');
+
     // Add/Edit Modal State
     const [showModal, setShowModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
     const [currentId, setCurrentId] = useState(null);
 
-    // Expanded Form Data
-    const [formData, setFormData] = useState({
-        hotel_name: '',
-        location: '',
-        status: 'new',
-        conversion_lift: '',
-        tags: '',
-        myra_score: '',
-        description: '',
-        amenities: { wifi: true, pool: false, spa: false, gym: false }
-    });
+    // ... (rest of state)
 
     useEffect(() => {
-        fetchData();
+        fetchOpportunities();
     }, []);
 
-    const fetchData = async () => {
-        setLoading(true);
-        const { data: opps, error } = await supabase
-            .from('opportunities')
-            .select('*')
-            .order('created_at', { ascending: false });
+    const fetchOpportunities = async () => {
+        try {
+            setLoading(true);
+            const { data, error } = await supabase
+                .from('opportunities')
+                .select('*')
+                .order('created_at', { ascending: false });
 
-        if (error) console.error(error);
-        else setOpportunities(opps || []);
-        setLoading(false);
+            if (error) throw error;
+            setOpportunities(data || []);
+        } catch (error) {
+            console.error('Error fetching opportunities:', error);
+        } finally {
+            setLoading(false);
+        }
     };
 
     const handleOpenAdd = () => {
         setIsEditMode(false);
+        // Reset form
         setFormData({
             hotel_name: '', location: '', status: 'new', conversion_lift: '', tags: '',
             myra_score: '', description: '', amenities: { wifi: true, pool: false, spa: false, gym: false }
         });
+        setCurrentId(null);
         setShowModal(true);
     };
 
     const handleOpenEdit = (opp) => {
         setIsEditMode(true);
-        setCurrentId(opp.id);
         setFormData({
-            hotel_name: opp.hotel_name || '',
-            location: opp.location || '',
+            hotel_name: opp.hotel_name,
+            location: opp.location,
             status: opp.status,
             conversion_lift: opp.conversion_lift,
-            tags: opp.knowledge_graph_tags ? opp.knowledge_graph_tags.join(', ') : '',
+            tags: opp.tags || '',
             myra_score: opp.myra_score || '',
             description: opp.description || '',
             amenities: opp.amenities || { wifi: false, pool: false, spa: false, gym: false }
         });
+        setCurrentId(opp.id);
         setShowModal(true);
+    };
+
+    const handleDeleteOpp = async (id) => {
+        const confirmDelete = window.confirm("Are you sure you want to delete this opportunity?");
+        if (!confirmDelete) return;
+
+        try {
+            const { error } = await supabase.from('opportunities').delete().eq('id', id);
+            if (error) throw error;
+            setOpportunities(prev => prev.filter(o => o.id !== id));
+        } catch (error) {
+            console.error('Error deleting:', error);
+            alert('Failed to delete opportunity');
+        }
+    };
+
+    const handleStatusChange = async (id, newStatus, currentOpp) => {
+        // Optimistic update
+        const originalOpps = [...opportunities];
+        setOpportunities(prev => prev.map(o => o.id === id ? { ...o, status: newStatus } : o));
+
+        try {
+            const { error } = await supabase.from('opportunities').update({ status: newStatus }).eq('id', id);
+            if (error) throw error;
+        } catch (error) {
+            console.error('Error updating status:', error);
+            alert('Failed to update status');
+            setOpportunities(originalOpps); // Revert
+        }
     };
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
-            const tagsArray = formData.tags.split(',').map(t => t.trim()).filter(t => t);
             const payload = {
-                hotel_name: formData.hotel_name,
-                location: formData.location,
-                status: formData.status,
-                conversion_lift: parseFloat(formData.conversion_lift),
-                knowledge_graph_tags: tagsArray,
-                myra_score: parseFloat(formData.myra_score),
-                description: formData.description,
-                amenities: formData.amenities
+                ...formData,
+                user_id: (await supabase.auth.getUser()).data.user?.id
             };
 
-            // Check if status changed to CLOSED -> Prompt for Approval Workflow
-            if (formData.status === 'closed' && (!isEditMode || opportunities.find(o => o.id === currentId)?.status !== 'closed')) {
-                if (window.confirm("Lead is Closed. Submit to Partner Approvals queue?")) {
-                    await handleApproveToPending(payload); // Create Pending Partner
-                }
-            }
-
-            if (isEditMode) {
-                await supabase.from('opportunities').update(payload).eq('id', currentId);
+            if (isEditMode && currentId) {
+                const { error } = await supabase.from('opportunities').update(payload).eq('id', currentId);
+                if (error) throw error;
             } else {
-                await supabase.from('opportunities').insert(payload);
+                const { error } = await supabase.from('opportunities').insert(payload);
+                if (error) throw error;
             }
 
             setShowModal(false);
-            fetchData();
+            fetchOpportunities();
         } catch (error) {
-            console.error(error);
-            alert('Operation failed');
+            console.error('Error saving opportunity:', error);
+            alert('Failed to save opportunity');
         }
     };
 
-    // New Workflow: Create PENDING partner from Lead
-    const handleApproveToPending = async (oppData) => {
-        try {
-            // Assign a random nice hotel image if one wasn't provided (Logic Polish)
-            const fallbackImages = [
-                'https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80',
-                'https://images.unsplash.com/photo-1582719508461-905c673771fd?auto=format&fit=crop&w=800&q=80',
-                'https://images.unsplash.com/photo-1571896349842-6e53ce41be03?auto=format&fit=crop&w=800&q=80',
-                'https://images.unsplash.com/photo-1455587734955-081b22074882?auto=format&fit=crop&w=800&q=80'
-            ];
-            const randomImage = fallbackImages[Math.floor(Math.random() * fallbackImages.length)];
+    // Form State
+    const [formData, setFormData] = useState({
+        hotel_name: '', location: '', status: 'new', conversion_lift: '', tags: '',
+        myra_score: '', description: '', amenities: { wifi: true, pool: false, spa: false, gym: false }
+    });
 
-            await supabase.from('partners').insert({
-                name: oppData.hotel_name,
-                location: oppData.location,
-                ugc_validation_status: 'pending', // Starts as Pending
-                amenities: oppData.amenities || { wifi: true, pool: false, spa: false },
-                myra_score: oppData.myra_score || 85, // Default score if missing
-                description: oppData.description || `New partner opportunity from ${oppData.location}.`,
-                image_url: randomImage,
-                onboarding_timestamp: new Date()
-            });
-            alert("Lead submitted to Partner Approvals (Pending)!");
-        } catch (error) {
-            console.error("Failed to push to approvals", error);
-        }
-    };
-
-    // In-Line Status Change
-    const handleStatusChange = async (id, newStatus, opp) => {
-        if (newStatus === 'closed') {
-            if (window.confirm("Mark as Closed & Submit for Partner Approval?")) {
-                await handleApproveToPending({
-                    hotel_name: opp.hotel_name,
-                    location: opp.location,
-                    amenities: opp.amenities || {},
-                    myra_score: opp.myra_score,
-                    description: opp.description
-                });
+    // Derived Data
+    const filteredOpportunities = opportunities
+        .filter(opp => {
+            if (filterStatus === 'all') return true;
+            return opp.status === filterStatus;
+        })
+        .sort((a, b) => {
+            switch (sortOption) {
+                case 'date-desc':
+                    return new Date(b.created_at) - new Date(a.created_at);
+                case 'date-asc':
+                    return new Date(a.created_at) - new Date(b.created_at);
+                case 'score-desc':
+                    return (b.myra_score || 0) - (a.myra_score || 0);
+                case 'score-asc':
+                    return (a.myra_score || 0) - (b.myra_score || 0);
+                case 'lift-desc':
+                    return (b.conversion_lift || 0) - (a.conversion_lift || 0);
+                default:
+                    return 0;
             }
-        }
+        });
 
-        await supabase.from('opportunities').update({ status: newStatus }).eq('id', id);
-        fetchData(); // Refresh to show update
-    };
-
-    const handleDeleteOpp = async (id) => {
-        if (!window.confirm("Delete this opportunity?")) return;
-        await supabase.from('opportunities').delete().eq('id', id);
-        setOpportunities(opportunities.filter(o => o.id !== id));
-    };
-
-    if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-mmt-blue" /></div>;
+    if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-secondary" /></div>;
 
     return (
         <div className="space-y-6 relative">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h1 className="text-3xl font-bold tracking-tight text-primary">Opportunities</h1>
                     <div className="text-sm text-muted-foreground">Manage Leads & Approvals</div>
                 </div>
-                <button
-                    onClick={handleOpenAdd}
-                    className="flex items-center gap-2 rounded-md bg-mmt-blue px-4 py-2 text-sm font-medium text-white hover:bg-blue-600"
-                >
-                    <Plus className="h-4 w-4" />
-                    New Lead
-                </button>
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleOpenAdd}
+                        className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90"
+                    >
+                        <Plus className="h-4 w-4" />
+                        New Lead
+                    </button>
+                </div>
+            </div>
+
+            {/* Filters & Sort Toolbar */}
+            <div className="flex flex-col sm:flex-row gap-4 bg-muted/30 p-3 rounded-lg border">
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium whitespace-nowrap">Filter Status:</span>
+                    <select
+                        className="h-8 rounded-md border text-sm px-2 bg-background focus:ring-1 focus:ring-primary"
+                        value={filterStatus}
+                        onChange={(e) => setFilterStatus(e.target.value)}
+                    >
+                        <option value="all">All Statuses</option>
+                        <option value="new">New</option>
+                        <option value="contacted">Contacted</option>
+                        <option value="negotiating">Negotiating</option>
+                        <option value="closed">Closed</option>
+                    </select>
+                </div>
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium whitespace-nowrap">Sort By:</span>
+                    <select
+                        className="h-8 rounded-md border text-sm px-2 bg-background focus:ring-1 focus:ring-primary"
+                        value={sortOption}
+                        onChange={(e) => setSortOption(e.target.value)}
+                    >
+                        <option value="date-desc">Newest First</option>
+                        <option value="date-asc">Oldest First</option>
+                        <option value="score-desc">Highest Score</option>
+                        <option value="score-asc">Lowest Score</option>
+                        <option value="lift-desc">Highest Lift</option>
+                    </select>
+                </div>
             </div>
 
             <div className="rounded-md border bg-card">
@@ -187,50 +216,56 @@ const Opportunities = () => {
                             </tr>
                         </thead>
                         <tbody className="[&_tr:last-child]:border-0">
-                            {opportunities.map((opp) => (
-                                <tr key={opp.id} className="border-b transition-colors hover:bg-muted/50">
-                                    <td className="p-4 align-middle">
-                                        <div className="font-medium">{opp.hotel_name}</div>
-                                        <div className="text-xs text-muted-foreground truncate max-w-[150px]">{opp.description}</div>
-                                    </td>
-                                    <td className="p-4 align-middle text-muted-foreground">{opp.location}</td>
-                                    <td className="p-4 align-middle">
-                                        <div className="flex items-center gap-1">
-                                            <span className={cn(
-                                                "font-bold",
-                                                opp.myra_score >= 80 ? "text-green-600" : opp.myra_score >= 60 ? "text-amber-600" : "text-red-500"
-                                            )}>{opp.myra_score || '-'}</span>
-                                            <span className="text-xs text-muted-foreground">/100</span>
-                                        </div>
-                                    </td>
-                                    <td className="p-4 align-middle font-bold text-mmt-orange">+{opp.conversion_lift}%</td>
-                                    <td className="p-4 align-middle">
-                                        <select
-                                            className={cn(
-                                                "h-8 rounded-md border bg-transparent px-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring",
-                                                opp.status === 'new' ? "bg-blue-50 text-blue-700 border-blue-200" :
-                                                    opp.status === 'contacted' ? "bg-purple-50 text-purple-700 border-purple-200" :
-                                                        opp.status === 'negotiating' ? "bg-amber-50 text-amber-700 border-amber-200" :
-                                                            "bg-green-50 text-green-700 border-green-200"
-                                            )}
-                                            value={opp.status}
-                                            onChange={(e) => handleStatusChange(opp.id, e.target.value, opp)}
-                                        >
-                                            <option value="new">New</option>
-                                            <option value="contacted">Contacted</option>
-                                            <option value="negotiating">Negotiating</option>
-                                            <option value="closed">Closed (Submit)</option>
-                                        </select>
-                                    </td>
-                                    <td className="p-4 align-middle text-right">
-                                        <div className="flex items-center justify-end gap-1">
-                                            <button onClick={() => setSelectedOpp(opp)} className="p-2 hover:bg-purple-50 text-purple-600 rounded-md" title="AI Insight"><Sparkles className="h-4 w-4" /></button>
-                                            <button onClick={() => handleOpenEdit(opp)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit"><Edit className="h-4 w-4" /></button>
-                                            <button onClick={() => handleDeleteOpp(opp.id)} className="p-2 hover:bg-red-50 text-red-600 rounded-md" title="Delete"><Trash2 className="h-4 w-4" /></button>
-                                        </div>
-                                    </td>
+                            {filteredOpportunities.length === 0 ? (
+                                <tr>
+                                    <td colSpan={6} className="p-8 text-center text-muted-foreground">No opportunities match your filter.</td>
                                 </tr>
-                            ))}
+                            ) : (
+                                filteredOpportunities.map((opp) => (
+                                    <tr key={opp.id} className="border-b transition-colors hover:bg-muted/50">
+                                        <td className="p-4 align-middle">
+                                            <div className="font-medium">{opp.hotel_name}</div>
+                                            <div className="text-xs text-muted-foreground truncate max-w-[150px]">{opp.description}</div>
+                                        </td>
+                                        <td className="p-4 align-middle text-muted-foreground">{opp.location}</td>
+                                        <td className="p-4 align-middle">
+                                            <div className="flex items-center gap-1">
+                                                <span className={cn(
+                                                    "font-bold",
+                                                    opp.myra_score >= 80 ? "text-green-600" : opp.myra_score >= 60 ? "text-amber-600" : "text-red-500"
+                                                )}>{opp.myra_score || '-'}</span>
+                                                <span className="text-xs text-muted-foreground">/100</span>
+                                            </div>
+                                        </td>
+                                        <td className="p-4 align-middle font-bold text-mmt-orange">+{opp.conversion_lift}%</td>
+                                        <td className="p-4 align-middle">
+                                            <select
+                                                className={cn(
+                                                    "h-8 rounded-md border bg-transparent px-2 text-xs font-medium focus:outline-none focus:ring-1 focus:ring-ring",
+                                                    opp.status === 'new' ? "bg-blue-50 text-blue-700 border-blue-200" :
+                                                        opp.status === 'contacted' ? "bg-purple-50 text-purple-700 border-purple-200" :
+                                                            opp.status === 'negotiating' ? "bg-amber-50 text-amber-700 border-amber-200" :
+                                                                "bg-green-50 text-green-700 border-green-200"
+                                                )}
+                                                value={opp.status}
+                                                onChange={(e) => handleStatusChange(opp.id, e.target.value, opp)}
+                                            >
+                                                <option value="new">New</option>
+                                                <option value="contacted">Contacted</option>
+                                                <option value="negotiating">Negotiating</option>
+                                                <option value="closed">Closed (Submit)</option>
+                                            </select>
+                                        </td>
+                                        <td className="p-4 align-middle text-right">
+                                            <div className="flex items-center justify-end gap-1">
+                                                <button onClick={() => setSelectedOpp(opp)} className="p-2 hover:bg-purple-50 text-purple-600 rounded-md" title="AI Insight"><Sparkles className="h-4 w-4" /></button>
+                                                <button onClick={() => handleOpenEdit(opp)} className="p-2 hover:bg-gray-100 rounded-md" title="Edit"><Edit className="h-4 w-4" /></button>
+                                                <button onClick={() => handleDeleteOpp(opp.id)} className="p-2 hover:bg-red-50 text-red-600 rounded-md" title="Delete"><Trash2 className="h-4 w-4" /></button>
+                                            </div>
+                                        </td>
+                                    </tr>
+                                ))
+                            )}
                         </tbody>
                     </table>
                 </div>
@@ -311,7 +346,7 @@ const Opportunities = () => {
 
                             <div className="flex justify-end gap-2 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium">Cancel</button>
-                                <button type="submit" className="bg-mmt-blue text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600">{isEditMode ? 'Update' : 'Create'}</button>
+                                <button type="submit" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90">{isEditMode ? 'Update' : 'Create'}</button>
                             </div>
                         </form>
                     </div>

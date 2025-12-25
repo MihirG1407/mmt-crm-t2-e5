@@ -2,8 +2,11 @@
 import React, { useEffect, useState } from 'react';
 import { supabase } from '../../supabase';
 import { Loader2, TrendingUp, Users, CheckCircle, Clock, AlertTriangle, FileText } from 'lucide-react';
+import { useAuth } from '../../context/AuthContext';
 
 const DashboardHome = () => {
+    const { user } = useAuth();
+    const [userProfile, setUserProfile] = useState(null);
     const [stats, setStats] = useState({
         totalPartners: 0,
         pendingApprovals: 0,
@@ -19,7 +22,18 @@ const DashboardHome = () => {
     }, []);
 
     const fetchDashboardData = async () => {
+        // ... (rest of the fetch logic unchanged)
         try {
+            // 0. Fetch User Profile
+            if (user) {
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('*')
+                    .eq('id', user.id)
+                    .single();
+                if (profile) setUserProfile(profile);
+            }
+
             // 1. Fetch Partners Data
             const { data: partners, error: pError } = await supabase
                 .from('partners')
@@ -55,17 +69,25 @@ const DashboardHome = () => {
             };
 
             // C. Pipeline Trend (Last 7 Days)
-            // Group opps by created_at date
             const last7Days = [...Array(7)].map((_, i) => {
                 const d = new Date();
                 d.setDate(d.getDate() - i);
-                return d.toISOString().split('T')[0];
-            }).reverse();
+                return d;
+            });
 
-            const pipelineData = last7Days.map(date => {
-                const count = opps.filter(o => o.created_at.startsWith(date)).length;
+            const pipelineData = last7Days.reverse().map(dateObj => {
+                // Display Day (e.g., "Mon")
+                const displayDay = dateObj.toLocaleDateString('en-US', { weekday: 'short' });
+                const dateString = dateObj.toDateString(); // "Wed Dec 25 2024" (Local)
+
+                // Filter opps
+                const count = opps.filter(o => {
+                    // Compare local date strings
+                    return new Date(o.created_at).toDateString() === dateString;
+                }).length;
+
                 return {
-                    day: new Date(date).toLocaleDateString('en-US', { weekday: 'short' }),
+                    day: displayDay,
                     count
                 };
             });
@@ -85,7 +107,7 @@ const DashboardHome = () => {
         }
     };
 
-    if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-mmt-blue" /></div>;
+    if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-secondary" /></div>;
 
     // Helper for max value in charts
     // Fix: Set a minimum floor of 10 for the Y-axis so small numbers don't look huge
@@ -96,16 +118,27 @@ const DashboardHome = () => {
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-700">
-            <h1 className="text-3xl font-bold tracking-tight text-primary">Dashboard</h1>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                    <h1 className="text-3xl font-bold tracking-tight text-primary">CRM Dashboard</h1>
+                    <div className="flex items-center gap-2 mt-1">
+                        <span className="text-sm text-muted-foreground">Welcome back,</span>
+                        <span className="text-sm font-semibold">{userProfile?.full_name || user?.email || 'Partner'}</span>
+                        <span className="px-2 py-0.5 rounded-full bg-secondary/10 text-secondary text-[10px] font-bold uppercase tracking-wider">
+                            {userProfile?.role ? userProfile.role.replace('_', ' ') : 'Partner Manager'}
+                        </span>
+                    </div>
+                </div>
+            </div>
 
             {/* Top Metrics Row */}
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
                 <div className="rounded-xl border bg-card text-card-foreground shadow p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1">
                     <div className="flex flex-row items-center justify-between space-y-0 pb-2">
                         <div className="text-sm font-medium text-muted-foreground">Active Partners</div>
-                        <Users className="h-4 w-4 text-mmt-blue" />
+                        <Users className="h-4 w-4 text-blue-500" />
                     </div>
-                    <div className="text-2xl font-bold text-mmt-blue">{stats.totalPartners}</div>
+                    <div className="text-2xl font-bold text-blue-500">{stats.totalPartners}</div>
                     <p className="text-xs text-muted-foreground">Approved properties</p>
                 </div>
                 <div className="rounded-xl border bg-card text-card-foreground shadow p-6 hover:shadow-lg transition-all duration-300 hover:-translate-y-1 delay-75">
@@ -147,9 +180,9 @@ const DashboardHome = () => {
                         {stats.pipeline.map((item, i) => {
                             const heightPct = (item.count / maxPipeline) * 100;
                             return (
-                                <div key={i} className="group relative w-full flex flex-col justify-end gap-2">
+                                <div key={i} className="group relative w-full h-full flex flex-col justify-end gap-2">
                                     <div
-                                        className="w-full bg-mmt-blue/80 rounded-t-sm transition-all hover:bg-mmt-blue min-h-[4px]"
+                                        className="w-full bg-blue-500 rounded-t-sm transition-all hover:bg-blue-600 min-h-[4px]"
                                         style={{ height: `${heightPct}%` }}
                                     ></div>
                                     <span className="text-xs text-muted-foreground text-center">

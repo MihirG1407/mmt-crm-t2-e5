@@ -2,12 +2,13 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { supabase } from '../../supabase';
-import { Loader2, User, Mail, Building, Save } from 'lucide-react';
+import { Loader2, User, Mail, Building, Save, Edit2, X } from 'lucide-react';
 import { cn } from '../../lib/utils';
 
 const Profile = () => {
     const { user } = useAuth();
     const [loading, setLoading] = useState(false);
+    const [isEditing, setIsEditing] = useState(false);
     const [profile, setProfile] = useState({
         full_name: '',
         role: 'rm',
@@ -64,6 +65,7 @@ const Profile = () => {
             const { error } = await supabase.from('profiles').upsert(updates);
             if (error) throw error;
             setMessage('Profile updated successfully!');
+            setIsEditing(false); // Exit edit mode on success
         } catch (error) {
             setMessage('Error updating the data!');
         } finally {
@@ -78,7 +80,7 @@ const Profile = () => {
             <div className="rounded-xl border bg-card text-card-foreground shadow">
                 <div className="p-6 space-y-6">
                     <div className="flex items-center gap-4">
-                        <div className="h-20 w-20 rounded-full bg-mmt-blue/10 flex items-center justify-center text-mmt-blue">
+                        <div className="h-20 w-20 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
                             <User className="h-10 w-10" />
                         </div>
                         <div>
@@ -88,63 +90,88 @@ const Profile = () => {
                     </div>
 
                     <form onSubmit={updateProfile} className="space-y-4">
-                        <div className="grid gap-2">
-                            <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="email">
-                                Email
-                            </label>
-                            <div className="relative">
-                                <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <fieldset disabled={!isEditing} className="space-y-4 disabled:opacity-80">
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70" htmlFor="email">
+                                    Email
+                                </label>
+                                <div className="relative">
+                                    <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                    <input
+                                        className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                        id="email"
+                                        value={user?.email || ''}
+                                        disabled
+                                    />
+                                </div>
+                            </div>
+
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none" htmlFor="fullName">Full Name</label>
                                 <input
-                                    className="flex h-10 w-full rounded-md border border-input bg-muted px-3 py-2 pl-9 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                    id="email"
-                                    value={user?.email || ''}
-                                    disabled
+                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                                    id="fullName"
+                                    type="text"
+                                    value={profile.full_name}
+                                    onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                                 />
                             </div>
-                        </div>
 
-                        <div className="grid gap-2">
-                            <label className="text-sm font-medium leading-none" htmlFor="fullName">Full Name</label>
-                            <input
-                                className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                                id="fullName"
-                                type="text"
-                                value={profile.full_name}
-                                onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                            />
-                        </div>
+                            <div className="grid gap-2">
+                                <label className="text-sm font-medium leading-none" htmlFor="role">Role</label>
+                                <div className="relative">
+                                    <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                                    <select
+                                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+                                        id="role"
+                                        value={profile.role}
+                                        onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                                    >
+                                        <option value="rm">Relationship Manager</option>
+                                        <option value="corporate_sales">Corporate Sales</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
 
-                        <div className="grid gap-2">
-                            <label className="text-sm font-medium leading-none" htmlFor="role">Role</label>
-                            <div className="relative">
-                                <Building className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                                <select
-                                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 pl-9 text-sm ring-offset-background focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
-                                    id="role"
-                                    value={profile.role}
-                                    onChange={(e) => setProfile({ ...profile, role: e.target.value })}
+                            {message && (
+                                <div className={cn("text-sm p-3 rounded-md", message.includes('Error') ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600")}>
+                                    {message}
+                                </div>
+                            )}
+                        </fieldset>
+
+                        <div className="flex items-center gap-2">
+                            {!isEditing ? (
+                                <button
+                                    type="button"
+                                    onClick={() => setIsEditing(true)}
+                                    className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-white hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-auto"
                                 >
-                                    <option value="rm">Relationship Manager</option>
-                                    <option value="corporate_sales">Corporate Sales</option>
-                                    <option value="admin">Admin</option>
-                                </select>
-                            </div>
+                                    <Edit2 className="mr-2 h-4 w-4" />
+                                    Edit Profile
+                                </button>
+                            ) : (
+                                <>
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsEditing(false)}
+                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground h-10 px-4 py-2 w-full sm:w-auto"
+                                    >
+                                        <X className="mr-2 h-4 w-4" />
+                                        Cancel
+                                    </button>
+                                    <button
+                                        type="submit"
+                                        disabled={loading}
+                                        className="inline-flex items-center justify-center rounded-md text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 h-10 px-4 py-2 w-full sm:w-auto"
+                                    >
+                                        {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
+                                        Save Changes
+                                    </button>
+                                </>
+                            )}
                         </div>
-
-                        {message && (
-                            <div className={cn("text-sm p-3 rounded-md", message.includes('Error') ? "bg-red-50 text-red-600" : "bg-green-50 text-green-600")}>
-                                {message}
-                            </div>
-                        )}
-
-                        <button
-                            type="submit"
-                            disabled={loading}
-                            className="inline-flex items-center justify-center rounded-md text-sm font-medium ring-offset-background transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:pointer-events-none disabled:opacity-50 bg-mmt-blue text-primary-foreground hover:bg-blue-600 h-10 px-4 py-2 w-full sm:w-auto"
-                        >
-                            {loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Save className="mr-2 h-4 w-4" />}
-                            Save Changes
-                        </button>
                     </form>
                 </div>
             </div>

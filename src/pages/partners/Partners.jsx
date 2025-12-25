@@ -182,7 +182,7 @@ const Partners = () => {
                         style={{ animationDelay: `${i * 50}ms` }}
                     >
                         {/* Action Overlay */}
-                        <div className="absolute top-2 right-2 z-10 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <div className="absolute top-2 right-2 z-10 flex gap-2 transition-opacity duration-200">
                             {activeTab === 'pending' && (
                                 <>
                                     <button onClick={(e) => handleApprove(partner.id, e)} className="p-2 rounded-full bg-green-500 text-white shadow-lg hover:scale-110 transition-transform" title="Approve">
