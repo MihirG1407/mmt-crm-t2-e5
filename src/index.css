@@ -1,4 +1,3 @@
-
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -14,13 +13,13 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    /* MMT Blue */
-    --primary: 207 100% 50%;
-    --primary-foreground: 210 40% 98%;
+    /* MMT Red (Primary) */
+    --primary: 358 77% 55%;
+    --primary-foreground: 0 0% 100%;
 
-    /* MMT Orange */
-    --secondary: 16 100% 61%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    /* MMT Blue (Secondary) */
+    --secondary: 207 100% 50%;
+    --secondary-foreground: 0 0% 100%;
 
     --muted: 210 40% 96.1%;
     --muted-foreground: 215.4 16.3% 46.9%;
@@ -73,6 +72,7 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }

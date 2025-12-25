@@ -5,13 +5,16 @@ import { cn } from '../../lib/utils';
 
 const Settings = () => {
     const [notifications, setNotifications] = useState(true);
-    const [darkMode, setDarkMode] = useState(false);
+    // Initialize from localStorage or default to false
+    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
 
     React.useEffect(() => {
         if (darkMode) {
             document.documentElement.classList.add('dark');
+            localStorage.setItem('darkMode', 'true');
         } else {
             document.documentElement.classList.remove('dark');
+            localStorage.setItem('darkMode', 'false');
         }
     }, [darkMode]);
 
@@ -35,7 +38,7 @@ const Settings = () => {
                             </div>
                             <button
                                 onClick={() => setDarkMode(!darkMode)}
-                                className={cn("relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", darkMode ? "bg-mmt-blue" : "bg-input")}
+                                className={cn("relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", darkMode ? "bg-primary" : "bg-input")}
                             >
                                 <span className={cn("pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform", darkMode ? "translate-x-5" : "translate-x-0")} />
                             </button>
@@ -57,7 +60,7 @@ const Settings = () => {
                             </div>
                             <button
                                 onClick={() => setNotifications(!notifications)}
-                                className={cn("relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", notifications ? "bg-mmt-blue" : "bg-input")}
+                                className={cn("relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2", notifications ? "bg-primary" : "bg-input")}
                             >
                                 <span className={cn("pointer-events-none block h-5 w-5 rounded-full bg-background shadow-lg ring-0 transition-transform", notifications ? "translate-x-5" : "translate-x-0")} />
                             </button>
@@ -81,7 +84,7 @@ const Settings = () => {
                     </div>
                     <div className="p-6 pt-0">
                         <div className="py-2">
-                            <button className="text-sm text-mmt-blue hover:underline">Change Password</button>
+                            <button className="text-sm text-secondary hover:underline">Change Password</button>
                         </div>
                         <div className="py-2">
                             <button className="text-sm text-destructive hover:underline">Delete Account</button>

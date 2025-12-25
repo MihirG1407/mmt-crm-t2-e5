@@ -34,10 +34,10 @@ const LoginPage = () => {
             <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-10 shadow-lg">
                 <div className="text-center">
                     <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground">
-                        Sign in to <span className="text-mmt-blue">MMT Nexus</span>
+                        Sign in to <span className="text-secondary">MMT Nexus</span>
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Or <a href="/signup" className="font-medium text-mmt-blue hover:text-mmt-blue/80">Create an account</a>
+                        Or <a href="/signup" className="font-medium text-secondary hover:text-secondary/80">Create an account</a>
                     </p>
                 </div>
 
@@ -61,7 +61,7 @@ const LoginPage = () => {
                                     required
                                     value={email}
                                     onChange={(e) => setEmail(e.target.value)}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm focus:border-mmt-blue focus:outline-none focus:ring-1 focus:ring-mmt-blue sm:text-sm"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                                 />
                             </div>
                         </div>
@@ -79,7 +79,7 @@ const LoginPage = () => {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm focus:border-mmt-blue focus:outline-none focus:ring-1 focus:ring-mmt-blue sm:text-sm"
+                                    className="block w-full rounded-md border border-input bg-background px-3 py-2 shadow-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary sm:text-sm"
                                 />
                             </div>
                         </div>
@@ -88,7 +88,7 @@ const LoginPage = () => {
                             <button
                                 type="submit"
                                 disabled={loading}
-                                className="flex w-full justify-center rounded-md border border-transparent bg-mmt-blue py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-blue-600 focus:outline-none focus:ring-2 focus:ring-mmt-blue focus:ring-offset-2 disabled:opacity-50"
+                                className="flex w-full justify-center rounded-md border border-transparent bg-primary py-2 px-4 text-sm font-medium text-white shadow-sm hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
                             >
                                 {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Sign in"}
                             </button>

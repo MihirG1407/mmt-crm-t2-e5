@@ -43,8 +43,8 @@ export default {
                     foreground: "hsl(var(--card-foreground))",
                 },
                 mmt: {
-                    blue: "#008cff",
-                    orange: "#ff6d38"
+                    primary: "#e43338", // Red
+                    secondary: "#008cff" // Blue
                 }
             },
             borderRadius: {

@@ -127,7 +127,7 @@ const Partners = () => {
     };
 
 
-    if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-mmt-blue" /></div>;
+    if (loading) return <div className="flex h-full items-center justify-center"><Loader2 className="animate-spin h-8 w-8 text-secondary" /></div>;
 
     return (
         <div className="space-y-6 relative animate-in fade-in zoom-in-95 duration-500">
@@ -138,14 +138,14 @@ const Partners = () => {
                 </div>
                 <div className="flex items-center gap-2">
                     <select
-                        className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-mmt-blue/50"
+                        className="h-9 rounded-md border border-input bg-background px-3 text-sm focus:ring-primary/50"
                         value={sortBy}
                         onChange={(e) => setSortBy(e.target.value)}
                     >
                         <option value="created_at">Sort: Newest</option>
                         <option value="myra_score">Sort: Myra Score</option>
                     </select>
-                    <button onClick={handleOpenAdd} className="bg-mmt-blue text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600 shadow-lg hover:shadow-blue-500/20 transition-all">
+                    <button onClick={handleOpenAdd} className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90 shadow-lg hover:shadow-primary/20 transition-all">
                         Add Partner
                     </button>
                 </div>
@@ -293,7 +293,7 @@ const Partners = () => {
                             </div>
                             <div className="flex justify-end gap-2 pt-4">
                                 <button type="button" onClick={() => setShowModal(false)} className="px-4 py-2 text-sm font-medium">Cancel</button>
-                                <button type="submit" className="bg-mmt-blue text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-blue-600">{isEditMode ? 'Update' : 'Save'}</button>
+                                <button type="submit" className="bg-primary text-white px-4 py-2 rounded-md text-sm font-medium hover:bg-primary/90">{isEditMode ? 'Update' : 'Save'}</button>
                             </div>
                         </form>
                     </div>
@@ -324,7 +324,7 @@ const Partners = () => {
 };
 
 const AmenityBadge = ({ icon: Icon, label }) => (
-    <div className="flex items-center gap-1 rounded bg-secondary/10 px-2 py-1 text-[10px] text-secondary-foreground">
+    <div className="flex items-center gap-1 rounded bg-pink-100 px-2 py-1 text-[10px] text-pink-700 font-semibold border border-pink-200">
         <span className="font-medium">{label}</span>
     </div>
 );

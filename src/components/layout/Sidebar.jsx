@@ -1,10 +1,19 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { LayoutDashboard, Building2, Briefcase, FileText, Settings, UserCircle } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { LayoutDashboard, Building2, Briefcase, FileText, Settings, UserCircle, LogOut } from 'lucide-react';
 import { cn } from '../../lib/utils';
+import { useAuth } from '../../context/AuthContext';
 
 const Sidebar = () => {
+    const { signOut } = useAuth();
+    const navigate = useNavigate();
+
+    const handleLogout = async () => {
+        await signOut();
+        navigate('/login');
+    }
+
     const navItems = [
         { path: '/', label: 'Dashboard', icon: LayoutDashboard },
         { path: '/partners', label: 'Partner Directory', icon: Building2 },
@@ -13,13 +22,23 @@ const Sidebar = () => {
     ];
 
     return (
-        <aside className="hidden w-64 flex-col border-r bg-card md:flex">
+        <aside className="hidden w-64 flex-col border-r bg-card md:flex sticky top-0 h-screen">
             <div className="flex h-16 items-center border-b px-6">
-                <div className="flex items-center gap-2 font-bold text-xl text-mmt-blue">
-                    <span className="text-secondary">MMT</span>Nexus
-                </div>
+
+                {/* Light Mode Logo (Colored) */}
+                <img
+                    src="https://imgak.mmtcdn.com/pwa_v3/pwa_hotel_assets/header/logo@2x.png"
+                    alt="MakeMyTrip"
+                    className="h-8 object-contain dark:hidden"
+                />
+                {/* Dark Mode Logo (White) */}
+                <img
+                    src="https://imgak.mmtcdn.com/pwa_v3/pwa_hotel_assets/header/mmtLogoWhite.png"
+                    alt="MakeMyTrip"
+                    className="h-8 object-contain hidden dark:block"
+                />
             </div>
-            <div className="flex-1 flex flex-col gap-1 p-4">
+            <div className="flex-1 flex flex-col gap-1 p-4 overflow-y-auto">
                 {navItems.map((item) => (
                     <NavLink
                         key={item.path}
@@ -27,7 +46,7 @@ const Sidebar = () => {
                         className={({ isActive }) =>
                             cn(
                                 isActive
-                                    ? 'bg-mmt-blue/10 text-mmt-blue font-semibold border-r-4 border-mmt-blue'
+                                    ? 'bg-primary/10 text-primary font-semibold border-r-4 border-primary'
                                     : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white',
                                 'group flex items-center px-3 py-2 text-sm font-medium rounded-l-md transition-all duration-200'
                             )
@@ -49,7 +68,7 @@ const Sidebar = () => {
                     className={({ isActive }) =>
                         cn(
                             isActive
-                                ? 'bg-mmt-blue/10 text-mmt-blue font-semibold border-r-4 border-mmt-blue'
+                                ? 'bg-primary/10 text-primary font-semibold border-r-4 border-primary'
                                 : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900 dark:text-gray-300 dark:hover:bg-gray-800 dark:hover:text-white',
                             'group flex items-center px-3 py-2 text-sm font-medium rounded-l-md transition-all duration-200'
                         )
@@ -70,6 +89,13 @@ const Sidebar = () => {
                     <Settings className="h-5 w-5" />
                     <span>Settings</span>
                 </NavLink>
+                <button
+                    onClick={handleLogout}
+                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
+                >
+                    <LogOut className="h-5 w-5" />
+                    <span>Log Out</span>
+                </button>
             </div>
         </aside>
     );
