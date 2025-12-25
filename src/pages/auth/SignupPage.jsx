@@ -17,7 +17,13 @@ const SignupPage = () => {
         setLoading(true);
         setError(null);
         try {
-            const { error } = await signUp({ email, password });
+            const { error } = await signUp({
+                email,
+                password,
+                options: {
+                    emailRedirectTo: window.location.origin
+                }
+            });
             if (error) throw error;
             // Optionally navigate to login or show success message for email verification
             alert('Check your email for verification link!');
