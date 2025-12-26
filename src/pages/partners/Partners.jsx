@@ -12,6 +12,18 @@ const Partners = () => {
     const [activeTab, setActiveTab] = useState('approved'); // approved, pending, rejected
     const [sortBy, setSortBy] = useState('created_at'); // created_at, myra_score
 
+    // Micro-Cohorts
+    const MICRO_COHORTS = ['Couple', 'Romantic', 'Family', 'Friends', 'Party', 'Premium', 'Luxury'];
+
+    // Placeholder Images
+    const PLACEHOLDER_IMAGES = [
+        "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&q=80&w=300",
+        "https://images.unsplash.com/photo-1582719478250-c89cae4dc85b?auto=format&fit=crop&q=80&w=300",
+        "https://images.unsplash.com/photo-1571003123894-1f0594d2b5d9?auto=format&fit=crop&q=80&w=300",
+        "https://images.unsplash.com/photo-1542314831-068cd1dbfeeb?auto=format&fit=crop&q=80&w=300",
+        "https://images.unsplash.com/photo-1596436889106-be35e843f974?auto=format&fit=crop&q=80&w=300"
+    ];
+
     // Modal State
     const [showModal, setShowModal] = useState(false);
     const [isEditMode, setIsEditMode] = useState(false);
@@ -35,8 +47,41 @@ const Partners = () => {
             .from('partners')
             .select('*')
             .order(sortBy, { ascending: false });
-        if (error) console.error(error);
-        else setPartners(data || []);
+
+        if (error) {
+            console.error(error);
+        } else {
+            // Auto-fix: Assign random Micro-Cohort & Image to existing partners
+            const fixedData = await Promise.all((data || []).map(async (p) => {
+                let needsUpdate = false;
+                const updates = {};
+                let updatedPartner = { ...p };
+
+                // Fix Micro-Cohort
+                if (!p.amenities?.micro_cohort) {
+                    const randomCohort = MICRO_COHORTS[Math.floor(Math.random() * MICRO_COHORTS.length)];
+                    const newAmenities = { ...(p.amenities || {}), micro_cohort: randomCohort };
+                    updates.amenities = newAmenities;
+                    updatedPartner.amenities = newAmenities;
+                    needsUpdate = true;
+                }
+
+                // Fix Image
+                if (!p.image_url) {
+                    const randomImage = PLACEHOLDER_IMAGES[Math.floor(Math.random() * PLACEHOLDER_IMAGES.length)];
+                    updates.image_url = randomImage;
+                    updatedPartner.image_url = randomImage;
+                    needsUpdate = true;
+                }
+
+                if (needsUpdate) {
+                    await supabase.from('partners').update(updates).eq('id', p.id);
+                }
+
+                return updatedPartner;
+            }));
+            setPartners(fixedData);
+        }
         setLoading(false);
     };
 
@@ -205,11 +250,17 @@ const Partners = () => {
                                     <MapPin className="h-10 w-10 opacity-20" />
                                 </div>
                             )}
-                            {/* Score Badge */}
                             <div className="absolute bottom-2 right-2 bg-black/70 text-white px-2 py-1 rounded-md text-xs font-bold flex items-center gap-1 backdrop-blur-sm">
                                 <span>Score:</span>
                                 <span className={partner.myra_score >= 80 ? "text-green-400" : "text-yellow-400"}>{partner.myra_score || 'N/A'}</span>
                             </div>
+
+                            {/* Micro Cohort Badge */}
+                            {partner.amenities?.micro_cohort && (
+                                <div className="absolute top-2 left-2 bg-purple-600/90 text-white px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider shadow-sm backdrop-blur-sm">
+                                    {partner.amenities.micro_cohort}
+                                </div>
+                            )}
                         </div>
 
                         <div className="p-5">

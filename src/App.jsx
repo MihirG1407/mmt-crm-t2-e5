@@ -14,6 +14,19 @@ import Profile from './pages/profile/Profile';
 import Settings from './pages/settings/Settings';
 
 function App() {
+  React.useEffect(() => {
+    // Check local storage or default to true (Dark Mode)
+    const savedMode = localStorage.getItem('darkMode');
+    const isDark = savedMode === null || savedMode === 'true';
+
+    if (isDark) {
+      document.documentElement.classList.add('dark');
+      if (savedMode === null) localStorage.setItem('darkMode', 'true');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+  }, []);
+
   return (
     <AuthProvider>
       <Router>

@@ -5,8 +5,11 @@ import { cn } from '../../lib/utils';
 
 const Settings = () => {
     const [notifications, setNotifications] = useState(true);
-    // Initialize from localStorage or default to false
-    const [darkMode, setDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
+    // Initialize from localStorage or default to true
+    const [darkMode, setDarkMode] = useState(() => {
+        const saved = localStorage.getItem('darkMode');
+        return saved === null ? true : saved === 'true';
+    });
 
     React.useEffect(() => {
         if (darkMode) {
