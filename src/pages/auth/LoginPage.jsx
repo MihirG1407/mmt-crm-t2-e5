@@ -29,6 +29,21 @@ const LoginPage = () => {
         }
     };
 
+    const handleGuestLogin = async () => {
+        setLoading(true);
+        setError(null);
+        try {
+            // Try to sign in with specific guest credentials
+            const { error } = await signIn({ email: 'guest@mmt.com', password: 'GuestUser123!' });
+            if (error) throw error;
+            navigate('/');
+        } catch (err) {
+            setError(err.message + " (Please create this user in Supabase first!)");
+        } finally {
+            setLoading(false);
+        }
+    };
+
     return (
         <div className="flex min-h-screen items-center justify-center bg-gray-50 dark:bg-gray-900">
             <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-10 shadow-lg">
@@ -94,6 +109,26 @@ const LoginPage = () => {
                             </button>
                         </div>
                     </form>
+
+                    <div className="relative">
+                        <div className="absolute inset-0 flex items-center">
+                            <span className="w-full border-t border-gray-300 dark:border-gray-700" />
+                        </div>
+                        <div className="relative flex justify-center text-sm">
+                            <span className="bg-card px-2 text-muted-foreground">Demo Access</span>
+                        </div>
+                    </div>
+
+                    <button
+                        onClick={handleGuestLogin}
+                        disabled={loading}
+                        className="flex w-full justify-center rounded-md border border-gray-300 dark:border-gray-700 bg-transparent py-2 px-4 text-sm font-medium text-foreground shadow-sm hover:bg-gray-50 dark:hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50"
+                    >
+                        {loading ? <Loader2 className="animate-spin h-5 w-5" /> : "Login as Guest"}
+                    </button>
+                    <p className="text-center text-xs text-muted-foreground mt-2">
+                        (Requires 'guest@mmt.com' account)
+                    </p>
                 </div>
             </div>
         </div>
