@@ -43,7 +43,7 @@ const SignupPage = () => {
                         Create your account
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Or <a href="/login" className="font-medium text-secondary hover:text-secondary/80">sign in to existing account</a>
+                        Or <a href="/login" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500">sign in to existing account</a>
                     </p>
                 </div>
 

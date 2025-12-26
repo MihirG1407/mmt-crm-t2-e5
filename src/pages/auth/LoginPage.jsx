@@ -34,10 +34,10 @@ const LoginPage = () => {
             <div className="w-full max-w-md space-y-8 rounded-lg border bg-card p-10 shadow-lg">
                 <div className="text-center">
                     <h2 className="mt-6 text-3xl font-bold tracking-tight text-foreground">
-                        Sign in to <span className="text-secondary">MMT Nexus</span>
+                        Sign in to <span className="text-blue-600 dark:text-blue-400">MMT CRM</span>
                     </h2>
                     <p className="mt-2 text-sm text-muted-foreground">
-                        Or <a href="/signup" className="font-medium text-secondary hover:text-secondary/80">Create an account</a>
+                        Or <a href="/signup" className="font-medium text-blue-600 dark:text-blue-400 hover:text-blue-500">Create an account</a>
                     </p>
                 </div>
 

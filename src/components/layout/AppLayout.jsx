@@ -20,7 +20,7 @@ const AppLayout = () => {
                     >
                         <Menu className="h-6 w-6" />
                     </button>
-                    <span className="font-bold text-lg">MMT Nexus</span>
+                    <span className="font-bold text-lg">MMT CRM</span>
                 </header>
 
                 <div className="flex-1 overflow-auto p-4 md:p-8">
