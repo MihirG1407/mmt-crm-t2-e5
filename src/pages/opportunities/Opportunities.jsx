@@ -370,7 +370,7 @@ const Opportunities = () => {
             {/* AI Modal */}
             {selectedOpp && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4 animate-in fade-in duration-200">
-                    <div className="w-full max-w-lg rounded-xl border bg-card p-0 shadow-2xl relative overflow-hidden glass-card">
+                    <div className="w-full max-w-lg rounded-xl border bg-white dark:bg-gray-900 p-0 shadow-2xl relative overflow-hidden">
                         <div className="p-6 border-b bg-muted/20">
                             <div className="flex items-center justify-between">
                                 <h2 className="text-xl font-bold flex items-center gap-2">
